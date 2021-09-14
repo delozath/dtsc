@@ -123,5 +123,19 @@ class RelevancePlots():
             self.plt.savefig(self.fname)
         else:
             self.plt.show()
+
+
+class PlotPairs():
+    def __init__(self):
+        pass
+    
+    def violinplot(self,df,group,figsize=(15,6)):
+        df = df.melt(id_vars=group)
         
-        
+        fig, ax = plt.subplots(figsize=figsize)
+        sns.violinplot(data=df, x="variable", y="value", hue=group,
+                       split=True, inner="quart", linewidth=1,ax=ax)
+                      # palette={"Yes": "b", "No": ".85"})
+        #sns.despine(left=True)
+        #plt.show()
+    

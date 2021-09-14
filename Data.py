@@ -10,6 +10,7 @@ class FeatureTypes():
         self.FEATURES   = 'feature'
         self.TARTETS    = 'target'
         self.TREATMENTS = 'treatment'
+        self.CLUSTERS   = 'cluster'
         self.ALL        = 'all'
         
         self.db         = db
@@ -58,8 +59,14 @@ class FeatureTypes():
         types[self.TARTETS   ] = query[query['type']==self.TARTETS   ]['feature'].to_list()
         types[self.TREATMENTS] = query[query['type']==self.TREATMENTS]['feature'].to_list()
         """
+        
         self.keys       = query[query['type']==self.KEY       ]['feature'].to_list()
         self.features   = query[query['type']==self.FEATURES  ]['feature'].to_list()
         self.targets    = query[query['type']==self.TARTETS   ]['feature'].to_list()
         self.treatments = query[query['type']==self.TREATMENTS]['feature'].to_list()
         self.all        = self.keys + self.features + self.targets + self.treatments
+        
+        #cluster de variables
+        df              = query[query['type']!='useless']
+        clusters        = {i:j['feature'].to_list() for i,j in df.groupby('cluster')}
+        self.clusters   = clusters
