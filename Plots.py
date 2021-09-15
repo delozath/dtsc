@@ -126,16 +126,21 @@ class RelevancePlots():
 
 
 class PlotPairs():
-    def __init__(self):
-        pass
+    def __init__(self,middle, fformat='svg', prefix='DBAE 2021'):
+        self.middle  = middle
+        self.fformat = fformat
+        self.prefix  = "{} {} ".format(prefix, middle)
+        
     
-    def violinplot(self,df,group,figsize=(15,6)):
+    def violinplot(self,df,group,group_name,figsize=(15,6),path=''):
         df = df.melt(id_vars=group)
         
         fig, ax = plt.subplots(figsize=figsize)
         sns.violinplot(data=df, x="variable", y="value", hue=group,
                        split=True, inner="quart", linewidth=1,ax=ax)
-                      # palette={"Yes": "b", "No": ".85"})
-        #sns.despine(left=True)
-        #plt.show()
-    
+        
+        if len(path)>0:
+            fname = "{}{}{}.{}".format(path,self.prefix,group_name,self.fformat)
+            plt.savefig(fname)
+        
+        plt.show()
