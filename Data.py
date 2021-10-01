@@ -52,13 +52,6 @@ class FeatureTypes():
     
     def query_df_columns(self,group,table='features'):
         query                  = self.db[table].query("group=='%s'"%group)
-        """
-        types                  = {}
-        types[self.KEY       ] = query[query['type']==self.KEY       ]['feature'].to_list()
-        types[self.FEATURES  ] = query[query['type']==self.FEATURES  ]['feature'].to_list()
-        types[self.TARTETS   ] = query[query['type']==self.TARTETS   ]['feature'].to_list()
-        types[self.TREATMENTS] = query[query['type']==self.TREATMENTS]['feature'].to_list()
-        """
         
         self.keys       = query[query['type']==self.KEY       ]['feature'].to_list()
         self.features   = query[query['type']==self.FEATURES  ]['feature'].to_list()
@@ -67,6 +60,7 @@ class FeatureTypes():
         self.all        = self.keys + self.features + self.targets + self.treatments
         
         #cluster de variables
+        #TODO try-except cuando no hay columna cluster
         df              = query[query['type']!='useless']
         clusters        = {i:j['feature'].to_list() for i,j in df.groupby('cluster')}
         self.clusters   = clusters

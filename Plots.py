@@ -135,9 +135,10 @@ class PlotPairs():
     def violinplot(self,df,group,group_name,figsize=(15,6),path=''):
         df = df.melt(id_vars=group)
         
+        #TODO manejo de multiples grupos
         fig, ax = plt.subplots(figsize=figsize)
-        sns.violinplot(data=df, x="variable", y="value", hue=group,
-                       split=True, inner="quart", linewidth=1,ax=ax)
+        sns.violinplot(data=df, x="variable", y="value", hue=group,             
+                        split=True, inner="quart", linewidth=1,ax=ax)
         
         if len(path)>0:
             fname = "{}{}{}.{}".format(path,self.prefix,group_name,self.fformat)
