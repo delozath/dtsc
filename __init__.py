@@ -1,2 +1,3 @@
-import dtsc as dtsc
+import dtsc.data
+
 
