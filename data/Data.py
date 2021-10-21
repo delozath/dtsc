@@ -5,15 +5,20 @@ import numpy as np
 class FeatureTypes():
     """docstring for ."""
 
-    def __init__(self,db):
+    def __init__(self,db,group):
         self.KEY        = 'key'
         self.FEATURES   = 'feature'
         self.TARTETS    = 'target'
         self.TREATMENTS = 'treatment'
         self.CLUSTERS   = 'cluster'
         self.ALL        = 'all'
+        self.USELESS    = 'useless'
+        self.table      = 'features'
         
         self.db         = db
+        self.group      = group
+        
+        self._query_df_columns()
     
     def update_colnames(self,cols):
         for key,values in cols.items():
@@ -50,13 +55,14 @@ class FeatureTypes():
             
             self.all = self.keys + self.features + self.targets + self.treatments
     
-    def query_df_columns(self,group,table='features'):
-        query                  = self.db[table].query("group=='%s'"%group)
+    def _query_df_columns(self):
+        query                  = self.db[self.table].query("group=='%s'"%self.group)
         
-        self.keys       = query[query['type']==self.KEY       ]['feature'].to_list()
-        self.features   = query[query['type']==self.FEATURES  ]['feature'].to_list()
-        self.targets    = query[query['type']==self.TARTETS   ]['feature'].to_list()
-        self.treatments = query[query['type']==self.TREATMENTS]['feature'].to_list()
+        self.keys       = query[query['type']==self.KEY       ][self.FEATURES].to_list()
+        self.features   = query[query['type']==self.FEATURES  ][self.FEATURES].to_list()
+        self.targets    = query[query['type']==self.TARTETS   ][self.FEATURES].to_list()
+        self.treatments = query[query['type']==self.TREATMENTS][self.FEATURES].to_list()
+        self.useless    = query[query['type']==self.USELESS   ][self.FEATURES].to_list()
         self.all        = self.keys + self.features + self.targets + self.treatments
         
         #cluster de variables
