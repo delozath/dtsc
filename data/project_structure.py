@@ -14,9 +14,12 @@ class ProjectPaths():
         self.results = self.root + 'results/'
         self.config  = self.__get_config(query)
     
-    def __get_config(self, query):
+    def __get_config(self, query, fname='config.yml'):
         #TODO: verify if file exists
-        with open(self.src+'config.yml','r') as fconfig:
+        with open(self.src+fname,'r') as fconfig:
             config  = yaml.load(fconfig, Loader=yaml.FullLoader)
         
         return config[query['stage']][query['experiment']]
+    
+    def open_config(self,fname,query):
+        return self.__get_config(query,fname)
