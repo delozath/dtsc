@@ -1,8 +1,10 @@
 import pandas as pd
 
+
 def table(name,ext,path="./",sheets='none'):
     fname = "{}{}.{}".format(path,name,ext)
-    if ext == 'ods' or ext == 'xls' or ext == 'xlsx':
+    #if ext == 'ods' or ext == 'xls' or ext == 'xlsx':
+    if ext in ['ods', 'xls', 'xlsx']
         if sheets == 'none':
             sheets = None 
         else:
@@ -14,6 +16,9 @@ def table(name,ext,path="./",sheets='none'):
     
     elif ext == 'sav':
         data = pd.read_spss(fname)
+    
+    elif ext in ['ftr', 'fea']:
+        data = pd.read_feather(fname)
     
     else:
         data = -1
