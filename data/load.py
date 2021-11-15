@@ -12,7 +12,7 @@ def table(name,ext,path="./",sheets='none'):
         
         data = pd.read_excel(fname,sheet_name=sheets)
     elif ext == 'csv':
-        data = pd.read_csv(fname)
+        data = pd.read_csv(fname, low_memory=False)
     
     elif ext == 'sav':
         data = pd.read_spss(fname)
