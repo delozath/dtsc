@@ -4,7 +4,7 @@ import pandas as pd
 def table(name,ext,path="./",sheets='none'):
     fname = "{}{}.{}".format(path,name,ext)
     #if ext == 'ods' or ext == 'xls' or ext == 'xlsx':
-    if ext in ['ods', 'xls', 'xlsx']
+    if ext in ['ods', 'xls', 'xlsx']:
         if sheets == 'none':
             sheets = None 
         else:
