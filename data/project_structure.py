@@ -20,3 +20,7 @@ class ProjectPaths():
             config  = yaml.load(fconfig, Loader=yaml.FullLoader)
         
         return config
+    
+    def open_yaml(self,file):
+        fyaml = self.__get_config(file)
+        return fyaml
