@@ -2,7 +2,7 @@
 #import numpy  as np
 import pandas as pd
 
-from numpy import linspace, array
+from numpy import linspace, array, arange
 from numpy.random import shuffle
 
 import pdb
@@ -14,47 +14,53 @@ class Quantile_Splits():
     def __init__(self):
         pass
     
-    def __get_interval_index__(self, target, limits):
-        limits = array(limits)
-        mask   = {'block0':(target<limits[0]).to_numpy()}
-        for n, (low, high) in enumerate( zip(limits[:-1],limits[1:]) ):
-            mask[f'block{n+1}'] = ((target>=low) & (target<high)).to_numpy()
+    def __blocks_q__(self, y, nb):
+        #TODO generalizar para np.array
+        lims   = linspace(0, 1, nb)
+        blocks = {}
+        for n, (low,high) in enumerate( zip(lims[:-2], lims[1:-1]) ):
+            bl, bh                = y.quantile(low), y.quantile(high)
+            blocks[f'Q{high:0.2f}'] =  (y>=bl) & (y<bh)
         
-        mask[f'block{n+2}'] = (target>=limits[-1]).to_numpy()
+        blocks[f'Q{lims[-1]:0.2f}'] = (y>=bh)
         
-        return mask
+        return blocks
     
-    def __get_q_blocks_nbins__(self, target, nbins):
-        limits  = linspace(0, 1, nbins)
-        qs_lims = []
-        for lim in limits[1:-1]:
-            qs_lims.append(target.quantile(lim))
-        
-        return qs_lims
+    def __block_split__(self, y, mask, porc):
+        self.split = {}
+        #TODO: case para diferentes parametros, lista por ejemplo
+        if isinstance(porc, float):
+            for bk, mk in mask.items():
+                l   = y[mk].shape[0]
+                n   = int(l*porc)
+                sel = arange(l)<n
+                shuffle(sel)
+                
+                self.split[f"{bk}"] = {'train':y.index[mk][sel], 'test':y.index[mk][~sel]}
     
-    def __get__split__(self, df, blocks, porc_train):
+    def flatten_blocks(self):
         train, test = [], []
+        for _, val in self.split.items():
+            train += list(val['train']) 
+            test  += list(val['test' ])
         
-        for block, mask in blocks.items():
-            print(f"Procesando {block}")
-            index = df[mask].index.values
-            N     = int(index.shape[0]*porc_train)
-            shuffle(index)
-            
-            train += list(index[:N])
-            test  += list(index[N:])
-        
-        
-        pdb.set_trace()
+        return train, test
     
-    def reg_q_split(self, df_targets, nbins=5, porc_train=0.7):
-        if isinstance(nbins, int):
-            #mask    = {}
-            for target in df_targets.columns:
-                df      = df_targets[target]
-                qs_lims = self.__get_q_blocks_nbins__(df, nbins)
-                mask    = self.__get_interval_index__(df, qs_lims)
-                self.__get__split__(df,mask,porc_train)
-            #self.__get_interval_index__(df_targets['MGkg'], df['MGkg'])
-            pdb.set_trace()
+    #TODO: actualizar esto
+    def tmp_store_splits(self,splits):
+        index = lambda ix: ';'.join([str(i) for i in ix])
+        df_idx = pd.DataFrame()
+        for id, split in splits.items():
+            for ft, idx in split.items():
+                df_idx = df_idx.append(\
+                             {'id':id, 
+                              'ft':ft,
+                              'idx_tn':index(idx['idx_train']),
+                              'idx_tt':index(idx['idx_test' ])},
+                             ignore_index=True)
+        return df_idx
+    
+    def reg_qsplit(self, y, nb=4, porc=0.7):
+        masks = self.__blocks_q__(y, nb+1)
+        self.__block_split__(y, masks, porc)
         
