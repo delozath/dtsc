@@ -2,7 +2,7 @@ import pdb
 
 import numpy as np 
 
-class FeatureTypes():
+class cvars():
     """docstring for ."""
 
     def __init__(self,db,group):

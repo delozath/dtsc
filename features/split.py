@@ -26,13 +26,13 @@ class Quantile_Splits():
         
         return blocks
     
-    def __block_split__(self, y, mask, porc):
+    def __block_split__(self, y, mask, porc_train):
         self.split = {}
         #TODO: case para diferentes parametros, lista por ejemplo
-        if isinstance(porc, float):
+        if isinstance(porc_train, float):
             for bk, mk in mask.items():
                 l   = y[mk].shape[0]
-                n   = int(l*porc)
+                n   = int(l*porc_train)
                 sel = arange(l)<n
                 shuffle(sel)
                 
@@ -60,7 +60,7 @@ class Quantile_Splits():
                              ignore_index=True)
         return df_idx
     
-    def reg_qsplit(self, y, nb=4, porc=0.7):
+    def reg_qsplit(self, y, nb=4, porc_train=0.7):
         masks = self.__blocks_q__(y, nb+1)
-        self.__block_split__(y, masks, porc)
+        self.__block_split__(y, masks, porc_train)
         
