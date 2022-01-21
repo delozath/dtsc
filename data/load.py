@@ -38,8 +38,13 @@ class Load_File():
         self.paths    = paths(self.root_path)
         self.config   = self.paths.config[self.stage][self.experiment]
     
-    def load_file(self, file='data'):
-        fparams   = self.config['files'][file]
+    def load_file(self, file='data', fparams=0):
+        if fparams==0:
+            fparams   = self.config['files'][file]
+        
+        return self.__load_file__(file=file, fparams=fparams)
+    
+    def __load_file__(self, fparams, file='data'):
         if 'ft_include' in fparams.keys():
             ft_include = fparams.pop('ft_include')
             data       = load_table(**fparams)
