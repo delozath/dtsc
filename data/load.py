@@ -35,8 +35,11 @@ class Load_File():
         self.__get_configuration__()
     
     def __get_configuration__(self):
-        self.paths    = paths(self.root_path)
-        self.config   = self.paths.config[self.stage][self.experiment]
+        self.paths  = paths(self.root_path)
+        self.config = self.paths.config[self.stage][self.experiment]
+        
+        if 'params' in self.paths.config.keys():
+            self.params = self.paths.config['params']
     
     def load_file(self, file='data', fparams=0):
         if fparams==0:
@@ -49,7 +52,14 @@ class Load_File():
             ft_include = fparams.pop('ft_include')
             data       = load_table(**fparams)
             cfeatures  = cvars(data, ft_include)
-            data       = data[fparams['sheets'][0]]
+            
+            if 'features' in data.keys():
+                data.pop('features')
+                
+                sheets = list(data.keys())
+                if len(sheets)==1:
+                    data   = data[sheets[0]]
+            
             return data, cfeatures, ft_include
         
         #Deprecated: caso para compatibilidad 
