@@ -21,8 +21,9 @@ class cvars():
         self._query_df_columns()
     
     def update_colnames(self,cols):
+        #cols -> dict {old_name:new_name}
         for key,values in cols.items():
-            tmp = list(values)
+            tmp = [values]
             if key in self.keys:
                 self.keys.remove(key)
                 self.keys = self.keys + tmp
@@ -70,3 +71,9 @@ class cvars():
         df              = query[query['type']!='useless']
         clusters        = {i:j['feature'].to_list() for i,j in df.groupby('cluster')}
         self.clusters   = clusters
+    
+    #TODO parametro para especificar que tipo de variable se modificara
+    #en esta version se quitan todos los espacios de todas las columnas
+    def drop_spaces_cnames(self, crep='_'):
+        
+        pdb.set_trace()
