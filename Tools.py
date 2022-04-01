@@ -2,6 +2,7 @@ import re
 
 import numpy  as np
 import pandas as pd
+import dtsc
 
 import pdb
 
@@ -14,7 +15,7 @@ def statsmodels_col_names(df, cols):
         new_cnames = dict(zip(vars, new_cnames))
     
     # explicit test the case when class is an dtsc.features.cvars objects
-    else:
+    elif isinstance(cols, dtsc.data.features.cvars):
         vars = []
         for i in ['features', 'keys', 'targets', 'treatments']:
             vars += getattr(cols, i)
@@ -23,6 +24,8 @@ def statsmodels_col_names(df, cols):
         new_cnames = dict(zip(vars, new_cnames))
         
         cols.update_colnames(new_cnames)
+    else:
+        raise TypeError("Not supported class to update column names")
     
     return df.rename(columns=new_cnames)
 
