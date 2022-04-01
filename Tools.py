@@ -50,6 +50,7 @@ def get_col_types(df, ft, tg):
 
 def get_sum_patsy(col_types):
     #TODO: agregar referencia de treatment
+    #TODO: agregar manejo de C()
     formula  = ' + '.join(col_types['ft']['cat'])
     formula += ' + '.join(col_types['ft']['num'])
     
