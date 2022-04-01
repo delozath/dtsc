@@ -6,7 +6,7 @@ import pandas as pd
 import pdb
 
 def statsmodels_col_names(df, cols):
-    rep = lambda l, lib: [lib.sub("[/\s()]", '_', c) for c in l]
+    rep = lambda l, lib: [lib.sub("[/\s()-]", '_', c) for c in l]
     
     if isinstance(cols, pd.core.indexes.base.Index):
         vars       = list(cols)
@@ -45,7 +45,7 @@ def get_col_types(df, ft, tg):
                         'num':ft_num  }
     return col_types
 
-def get_formula_patsy(col_types):
+def get_sum_patsy(col_types):
     #TODO: agregar referencia de treatment
     formula  = ' + '.join(col_types['ft']['cat'])
     formula += ' + '.join(col_types['ft']['num'])
