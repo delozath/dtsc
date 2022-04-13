@@ -1,3 +1,5 @@
+import pdb
+
 from time import localtime, strftime
 import re
 
@@ -8,36 +10,36 @@ import dtsc
 
 def statsmodels_col_names(df, cols):
     def rep(l, lib): return [lib.sub("[/\s()-]", '_', c) for c in l]
-
+    #
     if isinstance(cols, pd.core.indexes.base.Index):
         vars = list(cols)
         new_cnames = rep(vars, re)
         new_cnames = dict(zip(vars, new_cnames))
-
+    #
     # explicit test the case when class is an dtsc.features.cvars objects
     elif isinstance(cols, dtsc.data.features.cvars):
         vars = []
         for i in ['features', 'keys', 'targets', 'treatments']:
             vars += getattr(cols, i)
-
+        #
         new_cnames = rep(vars, re)
         new_cnames = dict(zip(vars, new_cnames))
-
+        #
         cols.update_colnames(new_cnames)
     else:
         raise TypeError("Not supported class to update column names")
-
+    #
     return df.rename(columns=new_cnames)
 
 
 def get_col_types(df, ft, tg):
-
+    #
     if len(ft) < 2:
         raise IndexError("The number of features must be at least 2")
-
+    #
     ft_cat = df[ft].select_dtypes(exclude=np.number).columns.values
     ft_num = df[ft].select_dtypes(include=np.number).columns.values
-
+    #
     col_types = {}
     #TODO: verificar para categoricos y fechas
     if df[tg].dtype == np.number:
@@ -49,13 +51,32 @@ def get_col_types(df, ft, tg):
                        'num': ft_num}
     return col_types
 
+def get_sum_patsy(target, features, ref):
+    formula = ''
+    for ft in features:
+        if ft in ref.keys():
+            formula += f"C({ft}, Treatment(reference='{ref[ft]}')) + "
+        else:
+            formula += f"{ft} + "
+    #
+    if target in features:
+        if target in ref.keys():
+            formula = f"C({target}, Treatment(reference='{ref[ft]}')) ~ {formula}"
+        else:
+            formula = f"C({target}) ~ {formula}"
+    else:
+        formula = f"{target} ~ {formula}"
+    #
+    return formula[:-3]
 
-def get_sum_patsy(col_types):
+
+#DeprecationWarning
+def get_sum_patsy_old(col_types):
     #TODO: agregar referencia de treatment
     #TODO: agregar manejo de C()
     formula = ' + '.join(col_types['ft']['cat'])
     formula += ' + '.join(col_types['ft']['num'])
-
+    #
     target = [*col_types['tg'].keys()][0]
     #TODO: verificar para categoricos y fechas
     if [*col_types['tg'].values()][0] == 'num':
@@ -63,9 +84,19 @@ def get_sum_patsy(col_types):
         formula = f"{target} ~ {formula}"
     else:
         formula = f"C({target}) ~ {formula}"
-
+    #
     return formula
 
+
+#DeprecationWarning()
+def cat_value_counts(df, verbose='True'):
+    counts = {}
+    for c in df.select_dtypes\
+              (exclude=np.number).columns:
+        counts[c] = df[c].value_counts()
+        if verbose:
+            print(f"{c}\n{counts[c]}\n\n")
+    return counts
 
 class RandomTunningValidationSplit():
     """docstring for CrossValidation."""

@@ -1,3 +1,4 @@
+import yaml
 import pandas as pd
 import pdb
 
@@ -27,6 +28,67 @@ def load_table(name, ext, path="./", sheets='none'):
     
     return data
 
+class __load_context_config__():
+    def __init__(self, path, fname_config='config'):
+        with open(f'{path}{fname_config}.yml') as yml_file:
+            self.available = []
+            for read in yaml.safe_load_all(yml_file):
+                key = [*read.keys()][0]
+                if   key == 'scrubbing':
+                    self.scrubbing = read[key]
+                    self.available.append('scrubbing')
+                elif key == 'explore':
+                    self.explore = read[key]
+                    self.available.append('explore')
+                elif key == 'ft_selection':
+                    self.ft_selection = read[key]
+                    self.available.append('ft_selection')
+                elif key == 'modeling':
+                    self.modeling = read[key]
+                    self.available.append('modeling')
+                elif key == 'report':
+                    self.report = read[key]
+                    self.available.append('report')
+                elif key == 'params':
+                    self.params = read[key]
+
+class load_full_context():
+    def __init__(self, path, stage):
+        self.__stages__ = __load_context_config__(path)
+        
+        if stage in self.__stages__.available:
+            self.stage = getattr(self.__stages__, stage)
+        else:
+            raise ValueError('Stage {stage} is not in the yaml configuration file')
+        
+        if 'params' in dir(self.__stages__):
+            self.params = self.__stages__.params
+        
+        ## TODO: regresar un objeto con referencia a todo el archivo YAML
+    #
+    def load(self, process, task):
+        fparams = self.stage[process][task]
+        full_context_data         = {}
+        full_context_vars_include = {}
+        for fname_key, fname_params in fparams['load'].items():
+            if 'vars_include' in fname_params.keys():
+                params       = fname_params.copy()
+                vars_include = params.pop('vars_include')
+                data         = load_table(**params)
+                vars_include = cvars(data, vars_include)
+                #
+                full_context_data        [fname_key] = data
+                full_context_vars_include[fname_key] = vars_include
+            else:
+                data                         = load_table(**fname_params)
+                full_context_data[fname_key] = data
+        if not full_context_vars_include:
+            full_context_vars_include['include'] = 'all'
+        return full_context_data, full_context_vars_include
+        
+
+
+#DeprecationWarning()
 class Load_File():
     def __init__(self, stage, experiment, root_path):
         self.stage      = stage
