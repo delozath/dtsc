@@ -52,18 +52,19 @@ class __load_context_config__():
                 elif key == 'params':
                     self.params = read[key]
 
-class load_full_context():
+class load_full_context(__load_context_config__):
     def __init__(self, path, stage):
-        self.__stages__ = __load_context_config__(path)
-        
-        if stage in self.__stages__.available:
-            self.stage = getattr(self.__stages__, stage)
+        super().__init__(path)
+        #self.__stages__ = __load_context_config__(path)
+        #
+        if stage in self.available:
+            self.stage = getattr(self, stage)
         else:
-            raise ValueError('Stage {stage} is not in the yaml configuration file')
-        
-        if 'params' in dir(self.__stages__):
-            self.params = self.__stages__.params
-        
+            raise ValueError(f'Stage {stage} is not in the yaml configuration file')
+        #
+        if 'params' in dir(self):
+            self.params = self.params
+        #
         ## TODO: regresar un objeto con referencia a todo el archivo YAML
     #
     def load(self, process, task):
