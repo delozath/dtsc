@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import dtsc
 
-
 def statsmodels_col_names(df, cols):
     def rep(l, lib): return [lib.sub("[/\s()-]", '_', c) for c in l]
     #
@@ -98,51 +97,10 @@ def cat_value_counts(df, verbose='True'):
             print(f"{c}\n{counts[c]}\n\n")
     return counts
 
-class RandomTunningValidationSplit():
-    """docstring for CrossValidation."""
-    from numpy import arange
-    from numpy.random import shuffle
-
-    def __init__(self, X, Y, p=0.7):
-        self.SAMPLES = 0
-        self.NTRAIN = 0
-        self.NVALIDATION = 1
-
-        self.X = X
-        self.Y = Y
-        self.shape = X.shape
-        self.p = p
-
-        self.nsamples = self._get_nsamples()
-
-    def _get_nsamples(self):
-        n_train = int(self.shape[self.SAMPLES]*self.p)
-        n_validation = self    .shape[self.SAMPLES]-n_train
-        return n_train, n_validation
-
-    def split(self):
-        index = self.arange(self.shape[self.SAMPLES])
-        self.shuffle(index)
-
-        self.X_Tunning = self.X[:self.nsamples[self.NTRAIN]]
-        self.Y_Tunning = self.Y[:self.nsamples[self.NTRAIN]]
-
-        self.X_Validation = self.X[-self.nsamples[self.NVALIDATION]:]
-        self.Y_Validation = self.Y[-self.nsamples[self.NVALIDATION]:]
-
-
 def seed():
     t = localtime()
     ct = strftime("%-S%-d%-H%-M", t)
     return int(ct)
-
-
-def file_name(prefix, GROUP, TREATMENT, TARGET, extension=""):
-    fname = '{} FTG-{} TRM-{} TGT-{}'.format(prefix, GROUP, TREATMENT, TARGET)
-    if extension != "":
-        fname += '.{}'.format(extension)
-
-    return fname
 
 
 def random_p_split(N: int = 100, p: float = 0.7) -> dict:

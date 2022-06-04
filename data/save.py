@@ -62,6 +62,7 @@ class export_dataframe(save_dataframe):
         if self.cfg_save['ext'] in ['ods', 'xlsx', 'xlsx']:
             self.data_frames_to_datasheets(dfs, fname=fname)
 
+#DeprecationWarning
 class Save_File():
     """docstring for Save."""
 
