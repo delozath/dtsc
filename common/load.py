@@ -1,3 +1,5 @@
+#DeprecationWarning
+"""
 import pandas as pd
 import pdb
 
@@ -18,3 +20,4 @@ def table(name,ext,path="./"):
         data = -1
     
     return data
+"""

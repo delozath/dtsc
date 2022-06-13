@@ -34,6 +34,7 @@ class __load_context_config__():
             self.available = []
             for read in yaml.safe_load_all(yml_file):
                 key = [*read.keys()][0]
+                #DeprecationWarning() key=scrubbing
                 if   key == 'scrubbing':
                     self.scrubbing = read[key]
                     self.available.append('scrubbing')
@@ -49,6 +50,10 @@ class __load_context_config__():
                 elif key == 'report':
                     self.report = read[key]
                     self.available.append('report')
+                #new componenet in yaml file
+                elif key == 'data':
+                    self.data = read[key]
+                    self.available.append('data')                
                 elif key == 'params':
                     self.params = read[key]
 
@@ -141,16 +146,4 @@ class Load_File():
     def files(self):
         files = self.config['files'].keys()
         return list(files)
-    
-    def get_output_fname(self,fout='target'):
-        #create output file name (joined file)
-        fparms = self.loader.config['files'][fout]
-        if 'path' in fparms.keys():
-            out = f"{fparms['path']}{fparms['name']}.{fparms['ext']}"
-        else:
-            path = self.loader.paths.data
-            out  = '.'.join(self.loader.config['files'][fout].values())
-            out  = path + out
-        
-        return out
         
