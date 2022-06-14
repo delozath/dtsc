@@ -1,5 +1,6 @@
 import pdb
 import yaml
+import pyperclip
 
 import numpy  as np
 import pandas as pd
@@ -9,7 +10,8 @@ from matplotlib import pyplot as plt
 
 N_UNIQUE = 6
 
-def basic(data, opath, ext='png'):
+#TODO complete join analysis to main database
+def basic(data, opath, ext='png', data_vars=''):
     #pdb.set_trace()
     path_img = opath['path'] + opath['subpath']['images']
     path_dat = opath['path'] + opath['subpath']['data']
@@ -60,8 +62,22 @@ def basic(data, opath, ext='png'):
             #
     df         = pd.DataFrame(info).T.reset_index()
     df.columns = ['variable'] + df.columns.to_list()[1:]
-    fname      = f"{path_dat}{opath['name']}.{opath['ext']}"
-    df.to_csv(fname, index=False)
+    #
+    if isinstance(data_vars, str):
+        fname      = f"{path_dat}{opath['name']}.{opath['ext']}"
+        df.to_csv(fname, index=False)
+        msg = f'Data stored in {fname}\n'
+        print(f"\n\nLOG_INFO: {msg}...\n\n")
+    #TODO test for especific class
+    elif isinstance(data_vars, pd.DataFrame):
+        df = data_vars.set_index('feature').join(df.set_index('variable'), rsuffix='_join').reset_index()
+        #
+        pyperclip.copy(df.to_csv(index=False))
+        msg = 'Data type analysis copied to clipboard'
+        input(f"\n\nLOG_INFO: {msg}, press any to continue...\n\n")
+        pdb.set_trace()
+    else:
+        raise TypeError("Only string or DataFrame admitted")
     
     #DeprecationWarning para bases de datos pequeñas es más facil con
     #una base de datos relacional en lugar de un yaml
@@ -70,8 +86,6 @@ def basic(data, opath, ext='png'):
         yaml.dump({'Column Exploration': info}, f, allow_unicode=True)
     """
     #
-    print(f"\nExplore figures stored in \n{path_img}...\n\n")
-    pdb.set_trace()
 
 def cat_numeric_uniques(df, cols, ft_types, sep=','):
     query    = ' | '.join([f"var=='{i}'" for i in cols])

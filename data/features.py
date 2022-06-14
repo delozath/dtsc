@@ -7,17 +7,15 @@ class cvars():
     def __init__(self, db, group):
         self.KEY        = 'key'
         self.FEATURES   = 'feature'
-        self.TARTETS    = 'target'
+        self.TARGETS    = 'target'
         self.TREATMENTS = 'treatment'
         self.CLUSTERS   = 'cluster'
-        self.ALL        = 'all'
         self.USELESS    = 'useless'
-        self.table      = 'features'
         #
-        self.db    = db
-        self.group = group
+        self.vars_db = db['features'].query(f"group=='{group}'")
+        self.group   = group
         #
-        self._query_df_columns()
+        self.__get_var_types__()
     #
     def update_colnames(self, cols):
         #cols -> dict {old_name:new_name}
@@ -54,29 +52,35 @@ class cvars():
                 raise ValueError('Not defined column error')
             #
             self.all = self.keys + self.features + self.targets + self.treatments
-
-    def _query_df_columns(self):
-        query = self.db[self.table].query("group=='%s'" % self.group)
+    #
+    def __get_var_types__(self):
         #
-        self.keys = query[query['type'] == self.KEY][self.FEATURES].to_list()
-        self.features = query[query['type']
-                              == self.FEATURES][self.FEATURES].to_list()
-        self.targets = query[query['type']
-                             == self.TARTETS][self.FEATURES].to_list()
-        self.treatments = query[query['type']
-                                == self.TREATMENTS][self.FEATURES].to_list()
-        self.useless = query[query['type']
-                             == self.USELESS][self.FEATURES].to_list()
+        self.keys       = self.vars_db.query(f"type=='{self.KEY}'"        )[self.FEATURES].to_list()
+        self.features   = self.vars_db.query(f"type=='{self.FEATURES}'"   )[self.FEATURES].to_list()
+        self.targets    = self.vars_db.query(f"type=='{self.TARGETS}'"    )[self.FEATURES].to_list()
+        self.treatments = self.vars_db.query(f"type=='{self.TREATMENTS}'" )[self.FEATURES].to_list()
+        self.useless    = self.vars_db.query(f"type=='{self.USELESS}'"    )[self.FEATURES].to_list()
+        #
         self.all = self.keys + self.features + self.targets + self.treatments
         #
-        #cluster de variables
-        #TODO try-except cuando no hay columna cluster
-        df = query[query['type'] != 'useless']
-        clusters = {i: j['feature'].to_list()
-                    for i, j in df.groupby('cluster')}
-        self.clusters = clusters
+        if self.vars_db[self.CLUSTERS].isnull().all():
+            self.clusters = 'Column clusters empty'
+        else:
+            self.clusters = list(self.vars_db[self.CLUSTERS].unique())
     #    
-    #TODO parametro para especificar que tipo de variable se modificara
+    #TODO parametro para especificar que tipo de variable se modificaraf
     #en esta version se quitan todos los espacios de todas las columnas
     def drop_spaces_cnames(self, crep='_'):
         pdb.set_trace()
+    #
+    def get_var_dtype(self, feature):
+        query = self.vars_db[self.vars_db.feature==feature]
+        return query[['dtype', 'dsubtype']].to_dict('records')[0]
+    
+    def get_var_dtypes(self):
+        dtypes = {}
+        for key, df in self.vars_db.groupby(['type', 'dtype', 'dsubtype']):
+            if  not('useless' in key):
+                dtypes[key] = list(df.feature.values)
+        #
+        return dtypes
