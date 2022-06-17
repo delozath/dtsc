@@ -78,9 +78,11 @@ class cvars():
         return query[['dtype', 'dsubtype']].to_dict('records')[0]
     
     def get_var_dtypes(self):
+        vars   = self.vars_db.query("type!='useless'")
         dtypes = {}
-        for key, df in self.vars_db.groupby(['type', 'dtype', 'dsubtype']):
+        for key, df in vars.groupby(['type', 'dtype', 'dsubtype']):
             if  not('useless' in key):
-                dtypes[key] = list(df.feature.values)
+                dtypes[key] = list(vars.feature.values)
         #
+        pdb.set_trace()
         return dtypes

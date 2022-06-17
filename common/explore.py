@@ -8,6 +8,10 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
+import statsmodels.api as sm
+
+from itertools import combinations
+
 N_UNIQUE = 6
 
 #TODO complete join analysis to main database
@@ -143,3 +147,41 @@ def cat_combination_analysis(df, features, vars_info, sep=';'):
         #
         codes.append({'grupo': n, 'cuenta': df.query(query).shape[0]})
     return pd.DataFrame(codes)
+    
+def pair_numeric_corr(df, cols):
+    corr_map = pd.DataFrame()
+    for x_0, x_1 in combinations(cols, 2):
+        X    = df[[x_0, x_1]]
+        corr = np.corrcoef(X[x_0], X[x_1])[0,1]
+        print(f"""{corr:5.3f}\n   - {x_0}\n   - {x_1}\n""")
+        tmp      = pd.DataFrame({'x_0': x_0, 'x_1': x_1, 'corr': corr}, index=[1])
+        corr_map = pd.concat((corr_map, tmp), axis=0)
+    #
+    sns.set(font_scale=.8)
+    ax = plt.axes()
+    g  = sns.heatmap( corr_map.pivot('x_0', 'x_1', 'corr'),
+           annot=True, fmt="5.3f", linewidths=.5, cmap='PiYG',
+           vmin=-1, vmax=1, ax=ax )
+    plt.tight_layout()
+    #g.figure.show()
+    plt.show()
+
+def pair_category_corr(df, cols):
+    pvalues = pd.DataFrame()
+    for x_0, x_1 in combinations(cols, 2):
+        X      = df[[x_0, x_1]]
+        table  = sm.stats.Table.from_data(X)
+        pvalue = table.test_nominal_association().pvalue
+        print(f"""{pvalue}\n   - {x_0}\n   - {x_1}\n""")
+        tmp     = pd.DataFrame({'x_0': x_0, 'x_1': x_1, 'pvalue': pvalue}, index=[1])
+        pvalues = pd.concat((pvalues, tmp), axis=0)
+    #
+    sns.set(font_scale=.8)
+    ax = plt.axes()
+    g  = sns.heatmap( pvalues.pivot('x_0', 'x_1', 'pvalue'),
+           annot=True, fmt="5.3f", linewidths=.5, cmap='YlGnBu',
+           vmin=0, vmax=1, ax=ax )
+    plt.tight_layout()
+    #g.figure.show()
+    plt.show()
+       
