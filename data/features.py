@@ -77,12 +77,18 @@ class cvars():
         query = self.vars_db[self.vars_db.feature==feature]
         return query[['dtype', 'dsubtype']].to_dict('records')[0]
     
-    def get_var_dtypes(self):
-        vars   = self.vars_db.query("type!='useless'")
-        dtypes = {}
-        for key, df in vars.groupby(['type', 'dtype', 'dsubtype']):
-            if  not('useless' in key):
-                dtypes[key] = list(vars.feature.values)
+    def __and_query__(self, df, query):
+        query = [f"{k}=='{f}'" for k, f in query.items()]
+        query = ' & '.join(query)
+        query = df.query(query)
         #
-        pdb.set_trace()
-        return dtypes
+        return query
+    
+    def get_var_dtypes(self, query):
+        df = self.__and_query__(self.vars_db, query)
+        return df.feature.to_list()
+    
+    def get_cat_references(self, query):
+        df    = self.__and_query__(self.vars_db, query)[['feature', 'reference', 'dsubtype']]
+        query = {f:{'reference':r, 'dsubtype':sdt} for f, r, sdt in df.values}
+        return query

@@ -30,105 +30,18 @@ def statsmodels_col_names(df, cols):
     #
     return df.rename(columns=new_cnames)
 
-
-def get_col_types(df, ft, tg):
-    #
-    if len(ft) < 2:
-        raise IndexError("The number of features must be at least 2")
-    #
-    ft_cat = df[ft].select_dtypes(exclude=np.number).columns.values
-    ft_num = df[ft].select_dtypes(include=np.number).columns.values
-    #
-    col_types = {}
-    #TODO: verificar para categoricos y fechas
-    if df[tg].dtype == np.number:
-        col_types['tg'] = {tg: 'num'}
-    else:
-        col_types['tg'] = {tg: 'cat'}
-
-    col_types['ft'] = {'cat': ft_cat,
-                       'num': ft_num}
-    return col_types
-
-def get_sum_patsy(target, features, ref):
-    formula = ''
-    for ft in features:
-        if ft in ref.keys():
-            formula += f"C({ft}, Treatment(reference='{ref[ft]}')) + "
+def get_patsy_reference(info):
+    formula = []
+    for k, f in info.items():
+        if f['dsubtype'] in ['int', 'float']:
+            formula.append(f"C({k}, Treatment(reference={f['reference']}))")
+        elif f['dsubtype'] in ['object', 'category']:
+            formula.append(f"C({k}, Treatment(reference='{f['reference']}'))")
         else:
-            formula += f"{ft} + "
-    #
-    if target in features:
-        if target in ref.keys():
-            formula = f"C({target}, Treatment(reference='{ref[ft]}')) ~ {formula}"
-        else:
-            formula = f"C({target}) ~ {formula}"
-    else:
-        formula = f"{target} ~ {formula}"
-    #
-    return formula[:-3]
-
-
-#DeprecationWarning
-def get_sum_patsy_old(col_types):
-    #TODO: agregar referencia de treatment
-    #TODO: agregar manejo de C()
-    formula = ' + '.join(col_types['ft']['cat'])
-    formula += ' + '.join(col_types['ft']['num'])
-    #
-    target = [*col_types['tg'].keys()][0]
-    #TODO: verificar para categoricos y fechas
-    if [*col_types['tg'].values()][0] == 'num':
-        target = [*col_types['tg'].keys()][0]
-        formula = f"{target} ~ {formula}"
-    else:
-        formula = f"C({target}) ~ {formula}"
-    #
-    return formula
-
-
-#DeprecationWarning()
-def cat_value_counts(df, verbose='True'):
-    counts = {}
-    for c in df.select_dtypes\
-              (exclude=np.number).columns:
-        counts[c] = df[c].value_counts()
-        if verbose:
-            print(f"{c}\n{counts[c]}\n\n")
-    return counts
+            formula.append(f"C({k})")
+    return ' + '.join(formula)
 
 def seed():
     t = localtime()
     ct = strftime("%-S%-d%-H%-M", t)
     return int(ct)
-
-
-def random_p_split(N: int = 100, p: float = 0.7) -> dict:
-    """
-    Generates random-shuffled indexes
-         
-    Parameters:
-    ----------
-    N : int
-        list lenght
-    p : float
-        proportion of split
-    
-    Returns:
-    -------
-      index : dict
-          S0 : firsts int(N*p) elements of random-shuffled index
-          S1 : Last int(N*(1-p)) elements of random-shuffled index
-    """
-    #TODO: to module
-    from numpy import arange
-    from numpy.random import shuffle
-
-    n_train = int(N*p)
-    n_validation = n_train - N
-
-    index = arange(N)
-    shuffle(index)
-
-    index = {'S0': index[:n_train], 'S1': index[n_validation:]}
-    return index
