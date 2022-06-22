@@ -1,5 +1,53 @@
+import pandas   as pd
+import numpy    as np
+import pingouin as pg
+
 import pdb
 
+class assumption_analysis():
+    def __init__(self, data):
+        self.data = data
+    def normality(self, cols, cgroup=None):
+        df = self.data[cols]
+        if df.select_dtypes(exclude=np.number).columns.to_list():
+            raise TypeError("At least one column is categorical, only numerical columns are accepted")
+        else:
+            if cgroup is None:
+                self.__normality_nogruped__(df)
+            else:
+                df = self.data[cols+[cgroup]]
+                self.__normality_gruped__(df, cgroup)
+    #
+    def __normality_gruped__(self, data, cgroup):
+        normality = list(map(self.__map_normality_nogruped__, data.groupby(cgroup)))
+        normality = pd.concat(normality)
+        pdb.set_trace()
+    #
+    def __map_normality_nogruped__(self, data):
+        group     = data[0]
+        df        = data[1]
+        normality = self.__normality_nogruped__(df)
+        normality['group'] = group
+        #
+        return normality
+    #
+    def __normality_nogruped__(self, df):
+        coincidence  = ['A-D_T result', 'S-W_T normal']        
+        anderson     = lambda c, f=df, pg=pg: [c] + list(pg.anderson(f[c].dropna()))
+        #
+        col_anderson = ['variable', 'A-D_T result', 'A-D_T statistic']
+        anderson_r   = list(map(anderson, df.columns))
+        anderson_r   = pd.DataFrame(anderson_r, columns=col_anderson)
+        anderson_r   = anderson_r.set_index(col_anderson[0])
+        #
+        normality = pg.normality(df, method='normaltest')
+        normality.columns = [f'S-W_T {i}' for i in normality.columns]
+        #
+        normality = normality.join(anderson_r)
+        normality = normality.assign(coincidence=normality[coincidence].all(axis=1))
+        #
+        return normality
+            
 #TODO Revisar
 class MultiComparisons():
     """docstring forMultiANOVA2V."""
