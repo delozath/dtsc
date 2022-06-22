@@ -13,10 +13,36 @@ class assumption_analysis():
             raise TypeError("At least one column is categorical, only numerical columns are accepted")
         else:
             if cgroup is None:
-                self.__normality_nogruped__(df)
+                #self.__normality_nogruped__(df)
+                normality = self.__anderson_test__(df)
+                normality = normality.join(self.__normality_test_nogroups__(df))
             else:
                 df = self.data[cols+[cgroup]]
+                
+                pdb.set_trace()
                 self.__normality_gruped__(df, cgroup)
+    #
+    def __anderson_test__(self, df):
+        anderson  = lambda c, f=df, pg=pg: [c] + list(pg.anderson(f[c].dropna()))
+        col_names = ['variable', 'A-D_T result', 'A-D_T statistic']
+        #
+        ad_test = list(map(anderson, df.columns))
+        ad_test = pd.DataFrame(ad_test, columns=col_names)
+        ad_test = ad_test.set_index(col_names[0])
+        
+        return ad_test
+    #
+    def __anderson_group_test(self, df, group):
+        
+    def __normality_test_nogroups__(self, df):
+        shapiro     = pg.normality(df)
+        shapiro.columns = [f'S-W_T {i}' for i in shapiro.columns]
+        #
+        jarque_bera = pg.normality(df, method='normaltest')
+        jarque_bera.columns = [f'J-B_T {i}' for i in jarque_bera.columns]
+        #
+        normality = shapiro.join(jarque_bera)
+        return normality
     #
     def __normality_gruped__(self, data, cgroup):
         normality = list(map(self.__map_normality_nogruped__, data.groupby(cgroup)))
