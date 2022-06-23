@@ -4,6 +4,8 @@ import pingouin as pg
 
 import pdb
 
+from itertools import repeat
+
 class assumption_analysis():
     def __init__(self, data):
         self.data = data
@@ -19,8 +21,14 @@ class assumption_analysis():
             else:
                 df = self.data[cols+[cgroup]]
                 
+                anderson  = self.__anderson_test_groups__  (df, cgroup)
+                normality = self.__normality_test_groups__(df, cgroup)
                 pdb.set_trace()
-                self.__normality_gruped__(df, cgroup)
+                pd.MultiIndex.from_product([['variance test'], table_tmp.columns])
+                table_tmp = anderson.pivot_table(index=anderson.index, columns='group')
+                table = normality.pivot_table(index='variable', columns=['method', cgroup]).round(3)
+                
+                pdb.set_trace()
     #
     def __anderson_test__(self, df):
         anderson  = lambda c, f=df, pg=pg: [c] + list(pg.anderson(f[c].dropna()))
@@ -32,7 +40,18 @@ class assumption_analysis():
         
         return ad_test
     #
-    def __anderson_group_test(self, df, group):
+    def __anderson_test_groups__(self, df, group):
+        def anderson_group(data, self=self):
+            group    = data[0]
+            df       = data[1]
+            anderson = self.__anderson_test__(df)
+            anderson['group'] = group
+            #
+            return anderson
+        #
+        anderson = list(map(anderson_group, [*df.groupby(group)]))
+        anderson = pd.concat(anderson)
+        return anderson
         
     def __normality_test_nogroups__(self, df):
         shapiro     = pg.normality(df)
@@ -44,33 +63,21 @@ class assumption_analysis():
         normality = shapiro.join(jarque_bera)
         return normality
     #
-    def __normality_gruped__(self, data, cgroup):
-        normality = list(map(self.__map_normality_nogruped__, data.groupby(cgroup)))
-        normality = pd.concat(normality)
-        pdb.set_trace()
-    #
-    def __map_normality_nogruped__(self, data):
-        group     = data[0]
-        df        = data[1]
-        normality = self.__normality_nogruped__(df)
-        normality['group'] = group
+    def __normality_test_groups__(self, data, cgroup):
+        def normality_test(col, method='shapiro', self=self):
+            normality = pg.normality(data=data, dv=col, group=cgroup, method=method)
+            normality['variable'] = col
+            normality['method'  ] = method
+            return normality
         #
-        return normality
-    #
-    def __normality_nogruped__(self, df):
-        coincidence  = ['A-D_T result', 'S-W_T normal']        
-        anderson     = lambda c, f=df, pg=pg: [c] + list(pg.anderson(f[c].dropna()))
+        cols = data.columns.to_list()
+        cols.remove(cgroup)
         #
-        col_anderson = ['variable', 'A-D_T result', 'A-D_T statistic']
-        anderson_r   = list(map(anderson, df.columns))
-        anderson_r   = pd.DataFrame(anderson_r, columns=col_anderson)
-        anderson_r   = anderson_r.set_index(col_anderson[0])
-        #
-        normality = pg.normality(df, method='normaltest')
-        normality.columns = [f'S-W_T {i}' for i in normality.columns]
-        #
-        normality = normality.join(anderson_r)
-        normality = normality.assign(coincidence=normality[coincidence].all(axis=1))
+        normality  = list(map(normality_test, cols))
+        normality += list(map(normality_test, cols, repeat('normaltest')))
+        normality  = pd.concat(normality)
+        normality  = normality.reset_index()
+        normality  = normality.rename(columns={'index':cgroup})
         #
         return normality
             
