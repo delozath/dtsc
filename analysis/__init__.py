@@ -1,1 +1,2 @@
-from dtsc.analysis.statistics import assumption_analysis
+from dtsc.analysis.statistics import normality_test
+from dtsc.analysis.statistics import preprocessing

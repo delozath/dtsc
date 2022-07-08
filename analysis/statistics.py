@@ -6,81 +6,104 @@ import pdb
 
 from itertools import repeat
 
-class assumption_analysis():
-    def __init__(self, data):
-        self.data = data
-    def normality(self, cols, cgroup=None):
-        df = self.data[cols]
-        if df.select_dtypes(exclude=np.number).columns.to_list():
-            raise TypeError("At least one column is categorical, only numerical columns are accepted")
-        else:
-            if cgroup is None:
-                #self.__normality_nogruped__(df)
-                normality = self.__anderson_test__(df)
-                normality = normality.join(self.__normality_test_nogroups__(df))
-            else:
-                df = self.data[cols+[cgroup]]
-                
-                anderson  = self.__anderson_test_groups__  (df, cgroup)
-                normality = self.__normality_test_groups__(df, cgroup)
-                pdb.set_trace()
-                pd.MultiIndex.from_product([['variance test'], table_tmp.columns])
-                table_tmp = anderson.pivot_table(index=anderson.index, columns='group')
-                table = normality.pivot_table(index='variable', columns=['method', cgroup]).round(3)
-                
-                pdb.set_trace()
-    #
-    def __anderson_test__(self, df):
-        anderson  = lambda c, f=df, pg=pg: [c] + list(pg.anderson(f[c].dropna()))
-        col_names = ['variable', 'A-D_T result', 'A-D_T statistic']
+class preprocessing:
+    @staticmethod
+    def drop_missing(data, missing=None):
+        df = data.dropna()
+        if not(missing is None):
+            df = df[~(df==missing).any(axis=1)]
         #
-        ad_test = list(map(anderson, df.columns))
-        ad_test = pd.DataFrame(ad_test, columns=col_names)
-        ad_test = ad_test.set_index(col_names[0])
-        
-        return ad_test
+        return df
+##
+class normality_test(preprocessing):
+    #TODO: implement Jarque Bera and additional 
     #
-    def __anderson_test_groups__(self, df, group):
-        def anderson_group(data, self=self):
-            group    = data[0]
-            df       = data[1]
-            anderson = self.__anderson_test__(df)
-            anderson['group'] = group
+    @classmethod
+    def normality(cls, var, hue, data, missing=None):
+        def unwrap_anderson(group):
+            series   = group[1].drop(columns=hue)
+            anderson = pg.anderson(series.values.flatten())
+            var      = series.columns[0]
             #
-            return anderson
+            return [var, group[0]] + list(anderson)
         #
-        anderson = list(map(anderson_group, [*df.groupby(group)]))
-        anderson = pd.concat(anderson)
-        return anderson
+        df     = data[[var, hue]]
+        df     = cls.drop_missing(df, missing)
+        #
+        anderson = list(map(unwrap_anderson, [*df.groupby(hue)]))
+        anderson = pd.DataFrame(anderson)
+        anderson.columns = 'variable', 'group', 'A-D test', 'A-D value'
         
-    def __normality_test_nogroups__(self, df):
-        shapiro     = pg.normality(df)
-        shapiro.columns = [f'S-W_T {i}' for i in shapiro.columns]
-        #
-        jarque_bera = pg.normality(df, method='normaltest')
-        jarque_bera.columns = [f'J-B_T {i}' for i in jarque_bera.columns]
-        #
-        normality = shapiro.join(jarque_bera)
-        return normality
+        shapiro = pg.normality(df, dv=var, group=hue)
+        shapiro = shapiro.reset_index().rename(columns={'index':'group'})
+        shapiro['variable'] = var
+        
+        return anderson, shapiro
     #
-    def __normality_test_groups__(self, data, cgroup):
-        def normality_test(col, method='shapiro', self=self):
-            normality = pg.normality(data=data, dv=col, group=cgroup, method=method)
-            normality['variable'] = col
-            normality['method'  ] = method
-            return normality
+    @classmethod
+    def df_normality(cls, vars, hue, data, missing=None):
+        if data[vars].select_dtypes(include=np.number).shape[-1] == len(vars):
+            df = data[vars+[hue]]
+            normality = list(map(cls.normality, 
+                             vars, 
+                             repeat(hue), 
+                             repeat(data), 
+                             repeat(missing)))
+            #
+            anderson = [n[0] for n in normality]
+            anderson = pd.concat(anderson)
+            #
+            shapiro   = [n[1] for n in normality]
+            shapiro   = pd.concat(shapiro)
+            col_names = list(normality[0][1].columns)
+            col_names = [col_names[0]] + [f"S-W {i}" for i in col_names[1:-1]] + [col_names[-1]]
+            shapiro.columns = col_names
+            #
+            table = anderson.set_index(['variable', 'group'])
+            table = table.join(shapiro.set_index(['variable', 'group'])).reset_index()
+            #
+            return table
+    #
+    @classmethod
+    def levene(cls, var, hue, data, missing=None):
+        df     = data[[var, hue]]
+        df     = cls.drop_missing(df, missing)        
+        
+        levene         = pg.homoscedasticity(df, var, hue)
+        levene.columns = [f"Levene {i}" for i in levene.columns]
+        levene['variable'] = var
+        return levene
+    #
+    @classmethod
+    def df_levene(cls, vars, hue, data, missing=None):
+        if data[vars].select_dtypes(include=np.number).shape[-1] == len(vars):
+            df = data[vars+[hue]]
+            #
+            levene = list(map(cls.levene, 
+                              vars, 
+                              repeat(hue), 
+                              repeat(df), 
+                              repeat(missing)))
+            table= pd.concat(levene)
+            return table
+    #
+    @classmethod
+    def df_run_test(cls, vars, hue, data, missing=None):
+        normality = cls.df_normality(vars, hue, data, missing=missing)
+        variances = cls.df_levene   (vars, hue, data, missing=missing)
         #
-        cols = data.columns.to_list()
-        cols.remove(cgroup)
+        table = normality.pivot_table(index='variable', columns=['group']).round(3)    
+        
+        summary = table.loc[:,['A-D test', 'S-W normal']]
+        colnames        = [f"{i[0]} {i[1]}" for i in summary.columns]
+        summary.columns = summary.columns.droplevel(0)
+        summary.columns = colnames
         #
-        normality  = list(map(normality_test, cols))
-        normality += list(map(normality_test, cols, repeat('normaltest')))
-        normality  = pd.concat(normality)
-        normality  = normality.reset_index()
-        normality  = normality.rename(columns={'index':cgroup})
+        summary = summary.join(variances.set_index('variable')['Levene equal_var']).astype('bool')
         #
-        return normality
-            
+        return normality, variances, summary
+        
+
 #TODO Revisar
 class MultiComparisons():
     """docstring forMultiANOVA2V."""
