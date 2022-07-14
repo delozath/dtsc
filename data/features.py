@@ -3,7 +3,11 @@ import pdb
 import pandas as pd
 
 class cvars():
-    """docstring for ."""
+    query_ft_num = {'dtype': 'numeric' , 'type': 'feature'  }
+    query_ft_cat = {'dtype': 'category', 'type': 'feature'  }
+    query_tg_num = {'dtype': 'numeric' , 'type': 'target'   }
+    query_tg_cat = {'dtype': 'category', 'type': 'target'   }
+    query_tm_cat = {'dtype': 'category', 'type': 'treatment'}
     #
     def __init__(self, db, group):
         self.KEY        = 'key'
@@ -83,7 +87,7 @@ class cvars():
             var_info = query.to_dict('records')[0]
         return var_info
     #
-    def get_var_dtypes(self, query):
+    def query_vars(self, query):
         if isinstance(query, dict):
             df = self.__and_query__(self.vars_db, query)
         elif isinstance(query, list):
@@ -121,26 +125,27 @@ class cvars():
         #
         return query
         #
-        def __repited_key_query__(self, df, query):
-            query = [[[*f.keys()][0], [*f.values()][0]] for f in query]
-            query = pd.DataFrame(query)
-            query.columns = 'keys', 'values'
-            
-            query_str = []
-            for key in query['keys'].unique():
-                split = query.query(f"keys=='{key}'")
-                split = split.to_dict('records')
-                if len(split)<2:
-                    s = [*split[0].values()]
-                    query_str.append(f"{s[0]}=='{s[1]}'")
-                else:
-                    unwrap = [f"{s['keys']}=='{s['values']}'" for s in split]
-                    unwrap = f"({' | '.join(unwrap)})"
-                    query_str.append(unwrap)
-                    #
-                    query_str = ' & '.join(query_str)
-                    #
-                    return df.query(query_str)
+    # REVIEW: 
+    def __repited_key_query__(self, df, query):
+        query = [[[*f.keys()][0], [*f.values()][0]] for f in query]
+        query = pd.DataFrame(query)
+        query.columns = 'keys', 'values'
+        
+        query_str = []
+        for key in query['keys'].unique():
+            split = query.query(f"keys=='{key}'")
+            split = split.to_dict('records')
+            if len(split)<2:
+                s = [*split[0].values()]
+                query_str.append(f"{s[0]}=='{s[1]}'")
+            else:
+                unwrap = [f"{s['keys']}=='{s['values']}'" for s in split]
+                unwrap = f"({' | '.join(unwrap)})"
+                query_str.append(unwrap)
+                #
+                query_str = ' & '.join(query_str)
+        #
+        return df.query(query_str)
 
 
 

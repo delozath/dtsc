@@ -30,11 +30,11 @@ def statsmodels_col_names(df, cols):
     #
     return df.rename(columns=new_cnames)
 
-def get_patsy_reference(cat_vars, dsubtype):
+def get_patsy_reference(cat_vars):
     def get_references(cat):
-        if dsubtype in ('int', 'float'):
+        if cat['dsubtype']   in ('int', 'float'):
             return f"C({cat['feature']}, Treatment(reference={cat['reference']}))"
-        elif dsubtype in ('object', 'category'):
+        elif cat['dsubtype'] in ('object', 'category'):
             return f"C({cat['feature']}, Treatment(reference='{cat['reference']}'))"
         else:
             return f"C({cat['feature']})"
