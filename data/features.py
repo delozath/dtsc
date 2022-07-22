@@ -130,7 +130,7 @@ class cvars():
         query = [[[*f.keys()][0], [*f.values()][0]] for f in query]
         query = pd.DataFrame(query)
         query.columns = 'keys', 'values'
-        
+        #
         query_str = []
         for key in query['keys'].unique():
             split = query.query(f"keys=='{key}'")
@@ -146,32 +146,3 @@ class cvars():
                 query_str = ' & '.join(query_str)
         #
         return df.query(query_str)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -7,7 +7,37 @@ import numpy as np
 import pandas as pd
 import dtsc
 
-def statsmodels_col_names(df, cols):
+
+class for_statsmodels():
+    KEY_VARIABLE     = 'variable'
+    DROP_CHARS_REGEX = r"[/\s()-]"
+    @staticmethod
+    def drop_space_colnames(df, vars_inc, vars_inc_db=''):
+        def rep(l, lib): return [lib.sub(for_statsmodels.DROP_CHARS_REGEX, '_', c) for c in l]
+        #
+        if   isinstance(vars_inc, list):
+            new_cnames = rep(vars_inc, re)
+            new_cnames = dict(zip(colnames, new_cnames))
+            #
+            return df.rename(columns=new_cnames)
+        #
+        elif isinstance(vars_inc, dtsc.data.load.variables):
+            vars       = vars_inc.all
+            new_cnames = rep(vars, re)
+            new_cnames = dict(zip(vars, new_cnames))
+            #
+            vars_inc.update_colnames(new_cnames)
+            #
+            if isinstance(vars_inc_db, pd.DataFrame):
+                vars = vars_inc_db[for_statsmodels.KEY_VARIABLE].\
+                             str.replace(for_statsmodels.DROP_CHARS_REGEX, '_', regex=True)
+                #
+                vars_inc_db[for_statsmodels.KEY_VARIABLE] = vars
+            #
+            return df.rename(columns=new_cnames), vars_inc, vars_inc_db
+        #
+
+def statsmodels_col_names____(df, cols):
     def rep(l, lib): return [lib.sub("[/\s()-]", '_', c) for c in l]
     #
     if isinstance(cols, pd.core.indexes.base.Index):

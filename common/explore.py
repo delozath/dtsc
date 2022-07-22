@@ -13,13 +13,9 @@ import statsmodels.api as sm
 from itertools import combinations
 
 N_UNIQUE = 6
-
+KEY_VARS = 'variable'
 #TODO complete join analysis to main database
-def basic(data, opath, ext='png', data_vars=''):
-    #pdb.set_trace()
-    path_img = opath['path'] + opath['subpath']['images']
-    path_dat = opath['path'] + opath['subpath']['data']
-    
+def initial(data, path_img, path_data, ext='png', vars_inc_db=''):
     info = {}
     for var in data.columns:
         print(f"Processing {var}-->")
@@ -65,31 +61,23 @@ def basic(data, opath, ext='png', data_vars=''):
             plt.close()
             #
     df         = pd.DataFrame(info).T.reset_index()
-    df.columns = ['variable'] + df.columns.to_list()[1:]
+    df.columns = [KEY_VARS] + df.columns.to_list()[1:]
     #
-    if isinstance(data_vars, str):
+    if isinstance(vars_inc_db, str):
         fname      = f"{path_dat}{opath['name']}.{opath['ext']}"
         df.to_csv(fname, index=False)
         msg = f'Data stored in {fname}\n'
         print(f"\n\nLOG_INFO: {msg}...\n\n")
     #TODO test for especific class
-    elif isinstance(data_vars, pd.DataFrame):
-        df = data_vars.set_index('feature').join(df.set_index('variable'), rsuffix='_join').reset_index()
+    elif isinstance(vars_inc_db, pd.DataFrame):
+        df = df.set_index(KEY_VARS)
+        df = df.join(vars_inc_db.set_index(KEY_VARS),  rsuffix='_join').reset_index()
         #
         pyperclip.copy(df.to_csv(index=False))
         msg = 'Data type analysis copied to clipboard'
         input(f"\n\nLOG_INFO: {msg}, press any to continue...\n\n")
-        pdb.set_trace()
     else:
         raise TypeError("Only string or DataFrame admitted")
-    
-    #DeprecationWarning para bases de datos pequeñas es más facil con
-    #una base de datos relacional en lugar de un yaml
-    """
-    with open(fname, 'w+') as f:
-        yaml.dump({'Column Exploration': info}, f, allow_unicode=True)
-    """
-    #
 
 def cat_numeric_uniques(df, cols, ft_types, sep=','):
     query    = ' | '.join([f"var=='{i}'" for i in cols])
@@ -121,7 +109,6 @@ def cat_numeric_uniques(df, cols, ft_types, sep=','):
     return df, codes
 
 #TODO:
-
 def __representation__(val, ft, type):
     if val=='nan':
         return f"{ft}.isnull()"
