@@ -13,11 +13,15 @@ class for_statsmodels():
     DROP_CHARS_REGEX = r"[/\s()-]"
     @staticmethod
     def drop_space_colnames(df, vars_inc, vars_inc_db=''):
-        def rep(l, lib): return [lib.sub(for_statsmodels.DROP_CHARS_REGEX, '_', c) for c in l]
+        def rep(l, lib)       : return [lib.sub(for_statsmodels.DROP_CHARS_REGEX, '_', c) for c in l]
+        def get_av_cols(vr, l): return [v for v in vr if v in l]
         #
         if   isinstance(vars_inc, list):
+            vars = df.columns
+            vars = get_av_cols(vars, vars_inc)
+            #
             new_cnames = rep(vars_inc, re)
-            new_cnames = dict(zip(colnames, new_cnames))
+            new_cnames = dict(zip(vars, new_cnames))
             #
             return df.rename(columns=new_cnames)
         #

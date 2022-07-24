@@ -12,10 +12,12 @@ import statsmodels.api as sm
 
 from itertools import combinations
 
+from dtsc.data.save import Export_DF
+
 N_UNIQUE = 6
 KEY_VARS = 'variable'
 #TODO complete join analysis to main database
-def initial(data, path_img, path_data, ext='png', vars_inc_db=''):
+def initial(data, paths, vars_inc_db='', fname='exploration', ext='png'):
     info = {}
     for var in data.columns:
         print(f"Processing {var}-->")
@@ -32,22 +34,22 @@ def initial(data, path_img, path_data, ext='png', vars_inc_db=''):
             if n_unique>N_UNIQUE:
                 #
                 if series.dtypes==np.int:
-                    info[var] = {'type':'numeric', 'subtype': 'int'  , 'nulls': int(n_nulls)}
+                    info[var] = {'dtype':'numeric', 'subtype': 'int'  , 'nulls': int(n_nulls)}
                 else:
-                    info[var] = {'type':'numeric', 'subtype': 'float', 'nulls': int(n_nulls)}
+                    info[var] = {'dtype':'numeric', 'subtype': 'float', 'nulls': int(n_nulls)}
                 #
                 g = sns.displot(x=var, data=data, height=12, aspect=12/8)
             else:
                 #test numeric data
                 if np.issubdtype(series.dtypes, np.number):
                     if series.dtypes==np.int:
-                        tmp = {'type': 'category', 'subtype': 'int', 'nulls': int(n_nulls)}
+                        tmp = {'dtype': 'category', 'subtype': 'int', 'nulls': int(n_nulls)}
                     else:
-                        tmp = {'type': 'category', 'subtype': 'float', 'nulls': int(n_nulls)}
+                        tmp = {'dtype': 'category', 'subtype': 'float', 'nulls': int(n_nulls)}
                 else:
-                    tmp = {'type': 'category', 'subtype': 'object', 'nulls': int(n_nulls)}
+                    tmp = {'dtype': 'category', 'subtype': 'object', 'nulls': int(n_nulls)}
                     #tmp['value_counts'] = series.value_counts().to_dict()
-                tmp['value_counts'] = str(series.value_counts().to_dict())[1:-1]
+                tmp['value_counts'] = str(series.value_counts().to_dict())[1:-1].replace(',', ';')
                 #
                 info[var] = tmp
                 #
@@ -56,7 +58,7 @@ def initial(data, path_img, path_data, ext='png', vars_inc_db=''):
                 g.bar_label(g.containers[0], fontsize=15)
             #
             plt.tight_layout()
-            g.figure.savefig(f"{path_img}{var}.{ext}")
+            g.figure.savefig(f"{paths.images}{var}.{ext}")
             g.figure.clear()
             plt.close()
             #
@@ -64,18 +66,19 @@ def initial(data, path_img, path_data, ext='png', vars_inc_db=''):
     df.columns = [KEY_VARS] + df.columns.to_list()[1:]
     #
     if isinstance(vars_inc_db, str):
-        fname      = f"{path_dat}{opath['name']}.{opath['ext']}"
-        df.to_csv(fname, index=False)
-        msg = f'Data stored in {fname}\n'
-        print(f"\n\nLOG_INFO: {msg}...\n\n")
+        pyperclip.copy(df.to_csv(index=False))
+        msg = 'Data type analysis copied to clipboard'
+        input(f"\n\nLOG_INFO: {msg}, press any to continue...\n\n")
     #TODO test for especific class
     elif isinstance(vars_inc_db, pd.DataFrame):
         df = df.set_index(KEY_VARS)
         df = df.join(vars_inc_db.set_index(KEY_VARS),  rsuffix='_join').reset_index()
         #
-        pyperclip.copy(df.to_csv(index=False))
-        msg = 'Data type analysis copied to clipboard'
-        input(f"\n\nLOG_INFO: {msg}, press any to continue...\n\n")
+        export = Export_DF()
+        
+        export(df, paths.data, 'test', 'xlsx', )
+        pdb.set_trace()
+    #
     else:
         raise TypeError("Only string or DataFrame admitted")
 

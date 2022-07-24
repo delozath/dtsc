@@ -1,7 +1,21 @@
 import pandas as pd
 import pdb
 
-class save_dataframe():
+class Export_DF():
+    def __init__(self, index=False):
+        self.index = index
+    #
+    def __to_excel(self, data: dict, path: str, fname: str, ext: str='xlsx'):
+        file = f"{path}{fname}.{ext}"
+        pdb.set_trace()
+    #
+    def __call__(self, data: dict, path: str, fname: str, ext: str):
+        if ext in ('xlsx', 'xls', 'ods'):
+            self.__to_excel(data, path, fname, ext)
+
+
+##DEPRECATED
+class Export_DF___():
     """docstring for save."""
 
     def __init__(self, cfg_save: dict, index=False):
@@ -28,39 +42,6 @@ class save_dataframe():
         writer.save()
         writer.close()
 
-
-class export_dataframe(save_dataframe):
-    def __init__(self, cfg_save: dict, index=False):
-        super().__init__(cfg_save, index)
-    
-    def init_feature_sheet(self, df):
-        features = {'feature'  : df.columns.to_list(),
-                    'data type': df.dtypes.values,
-                    'info'     : [str(i.type) for i in df.dtypes]}
-        
-        features = pd.DataFrame(features)
-        features['group']   = 'init'  
-        features['type']    = 'useless'
-        features['cluster'] = ''
-        
-        features = features[['group',
-                             'feature',
-                             'type',
-                             'cluster',
-                             'data type',
-                             'info']]
-        #
-        return features
-    
-    def export(self, dfs, fname=''):
-        if fname=='':
-            path  = self.cfg_save['path']
-            name  = self.cfg_save['name']
-            ext   = self.cfg_save['ext']
-            fname = f"{path}{name}.{ext}"
-        #
-        if self.cfg_save['ext'] in ['ods', 'xlsx', 'xlsx']:
-            self.data_frames_to_datasheets(dfs, fname=fname)
 
 #DeprecationWarning
 class Save_File():
