@@ -17,7 +17,31 @@ from dtsc.data.save import Export_DF
 N_UNIQUE = 6
 KEY_VARS = 'variable'
 #TODO complete join analysis to main database
-def initial(data, paths, vars_inc_db='', fname='exploration', ext='png'):
+def initial(data, paths, vars_inc_db='', fname='exploration', ext='png', exp=True):
+    """
+    Initial exploration. Generates Histograms of variables
+    
+    Parameters:
+    ----------
+    data : DataFrame
+        data analized
+    paths : str
+        path where results are going to be stored
+    vars_inc_db : DataFrame, str
+        If vars_inc_db is a str, results are going to be copied to clipboard,
+        if it is a DataFrame it is expected that it is a variable description
+        then complementary information are going to be append to the variable
+        information, otherwise raise an error
+    fname : DataFrame
+        File name. If vars_inc_db is a str, this parameter is ignored
+    ext : DataFrame
+        Extension of the images
+    exp : Bool
+        If exp is True variables and data are stored, else only variables
+    Returns:
+    -------
+      return : None
+    """
     info = {}
     for var in data.columns:
         print(f"Processing {var}-->")
@@ -75,9 +99,10 @@ def initial(data, paths, vars_inc_db='', fname='exploration', ext='png'):
         df = df.join(vars_inc_db.set_index(KEY_VARS),  rsuffix='_join').reset_index()
         #
         export = Export_DF()
-        
-        export(df, paths.data, 'test', 'xlsx', )
-        pdb.set_trace()
+        if exp=True:
+            export({'variables':df, 'data':data}, paths.data, 'test', 'xlsx', )
+        else:
+            export({'variables':df}, paths.data, 'test', 'xlsx', )
     #
     else:
         raise TypeError("Only string or DataFrame admitted")
